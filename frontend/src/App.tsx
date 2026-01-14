@@ -1,21 +1,62 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
-import Login from "./pages/Login";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Chat from "./pages/Chat";
 import Dashboard from "./pages/Dashboard";
 import Inbox from "./pages/Inbox";
-import Chat from "./pages/Chat";
+import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
+import Calendar from "./pages/Calendar";
+
+// Placeholder pages - create these as needed
+const Bookings = () => <div>Bookings Page</div>;
+const Settings = () => <div>Settings Page</div>;
+
 
 export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/inbox" element={<Inbox />} />
-          <Route path="/chat/:id" element={<Chat />} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/bookings" element={
+            <ProtectedRoute>
+              <Bookings />
+            </ProtectedRoute>
+          } />
+          <Route path="/calendar" element={
+            <ProtectedRoute>
+              <Calendar />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/chat" element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          } />
+          <Route path="/inbox" element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          } />
+          <Route path="/onboarding" element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          } />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
