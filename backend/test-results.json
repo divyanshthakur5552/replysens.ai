@@ -1,0 +1,308 @@
+{
+  "timestamp": "2026-03-01T17:31:11.356Z",
+  "totalTests": 20,
+  "passedTests": 20,
+  "failedTests": 0,
+  "results": [
+    {
+      "endpoint": "/health",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Health check successful",
+      "timestamp": "2026-03-01T17:31:11.402Z",
+      "data": {
+        "status": "Backend running"
+      }
+    },
+    {
+      "endpoint": "/auth/register",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Business registration successful",
+      "timestamp": "2026-03-01T17:31:11.669Z",
+      "data": {
+        "message": "Registered"
+      }
+    },
+    {
+      "endpoint": "/auth/login",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Login successful",
+      "timestamp": "2026-03-01T17:31:11.800Z",
+      "data": {
+        "hasToken": true
+      }
+    },
+    {
+      "endpoint": "/auth/me",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Get user info successful",
+      "timestamp": "2026-03-01T17:31:11.867Z",
+      "data": {
+        "_id": "69a477df8d10fa40c3965a2e",
+        "email": "test@apitesting.com",
+        "onboardingCompleted": false,
+        "services": [],
+        "__v": 0
+      }
+    },
+    {
+      "endpoint": "/onboarding",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Onboarding data saved successfully",
+      "timestamp": "2026-03-01T17:31:11.921Z",
+      "data": {
+        "message": "Onboarding saved"
+      }
+    },
+    {
+      "endpoint": "/context/load",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Context loaded successfully",
+      "timestamp": "2026-03-01T17:31:12.037Z",
+      "data": {
+        "message": "Context loaded to Redis",
+        "context": {
+          "tone": "friendly",
+          "services": [
+            {
+              "name": "Dining",
+              "duration": 60,
+              "price": 25
+            },
+            {
+              "name": "Takeout",
+              "duration": 15,
+              "price": 20
+            }
+          ],
+          "workingHours": {
+            "start": "09:00",
+            "end": "21:00"
+          },
+          "sessionDuration": 30,
+          "businessType": "Restaurant"
+        }
+      }
+    },
+    {
+      "endpoint": "/context",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Context retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.041Z",
+      "data": {
+        "tone": "friendly",
+        "services": [
+          {
+            "name": "Dining",
+            "duration": 60,
+            "price": 25
+          },
+          {
+            "name": "Takeout",
+            "duration": 15,
+            "price": 20
+          }
+        ],
+        "workingHours": {
+          "start": "09:00",
+          "end": "21:00"
+        },
+        "sessionDuration": 30,
+        "businessType": "Restaurant"
+      }
+    },
+    {
+      "endpoint": "/booking/slots",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Slots set successfully",
+      "timestamp": "2026-03-01T17:31:12.045Z",
+      "data": {
+        "message": "Slots set"
+      }
+    },
+    {
+      "endpoint": "/booking/slots",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Slots retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.049Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/all",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.139Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/today",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.200Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/upcoming",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.260Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/calendar",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.343Z",
+      "data": {}
+    },
+    {
+      "endpoint": "/booking/stats",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:12.855Z",
+      "data": {
+        "total": 0,
+        "confirmed": 0,
+        "pending": 0,
+        "canceled": 0,
+        "todayCount": 0
+      }
+    },
+    {
+      "endpoint": "/booking/chart-data",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:13.261Z",
+      "data": [
+        {
+          "date": "2026-02-22",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-23",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-24",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-25",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-26",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-27",
+          "bookings": 0
+        },
+        {
+          "date": "2026-02-28",
+          "bookings": 0
+        }
+      ]
+    },
+    {
+      "endpoint": "/booking/services-breakdown",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:13.314Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/status-breakdown",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Data retrieved successfully",
+      "timestamp": "2026-03-01T17:31:13.368Z",
+      "data": []
+    },
+    {
+      "endpoint": "/booking/debug",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Debug info retrieved",
+      "timestamp": "2026-03-01T17:31:13.374Z",
+      "data": [
+        "context:69a47625f783594bac4c4f41",
+        "selectedService:6964230a7ff6b9857a0dbb5f",
+        "slots:69a477df8d10fa40c3965a2e:2026-03-15",
+        "context:69a47441f783594bac4c4f26",
+        "context:69a472a5c7262a620de58fec",
+        "selectedDate:6964230a7ff6b9857a0dbb5f",
+        "bookingState:6964230a7ff6b9857a0dbb5f",
+        "test",
+        "context:69a477aa8d10fa40c3965a1b",
+        "history:69a477aa8d10fa40c3965a1b",
+        "selectedSlot:69638589e95e322c84ea6af3",
+        "context:69a476e61374d931ed1c811d",
+        "context:6964230a7ff6b9857a0dbb5f",
+        "slots:6964230a7ff6b9857a0dbb5f:2026-01-12",
+        "slots:6964230a7ff6b9857a0dbb5f:2026-01-11",
+        "context:69a477df8d10fa40c3965a2e",
+        "bookingState:69638589e95e322c84ea6af3",
+        "slots:69a472a5c7262a620de58fec:2026-03-15",
+        "slots:69638589e95e322c84ea6af3:2025-01-10",
+        "context:69a471edc7262a620de58fbb",
+        "context:69662a2d53a0cf767a561c58",
+        "context:69638589e95e322c84ea6af3",
+        "context:69a4758af783594bac4c4f39",
+        "slots:69638589e95e322c84ea6af3:2026-01-11",
+        "history:69638589e95e322c84ea6af3",
+        "context:69a476a1f783594bac4c4f49",
+        "context:69a477c08d10fa40c3965a22",
+        "context:69a47497f783594bac4c4f2b",
+        "slots:69a471edc7262a620de58fbb:2026-03-15",
+        "history:69a477c08d10fa40c3965a22",
+        "slots:6964230a7ff6b9857a0dbb5f:2026-01-13",
+        "context:6966289653a0cf767a561c51",
+        "context:69a47758560536f9e8aee049",
+        "history:6964230a7ff6b9857a0dbb5f"
+      ]
+    },
+    {
+      "endpoint": "/booking/debug/state",
+      "method": "GET",
+      "status": "PASS",
+      "message": "Debug state retrieved",
+      "timestamp": "2026-03-01T17:31:13.381Z",
+      "data": {
+        "state": null,
+        "service": null,
+        "date": null,
+        "slot": null
+      }
+    },
+    {
+      "endpoint": "/chat",
+      "method": "POST",
+      "status": "PASS",
+      "message": "Chat message processed successfully",
+      "timestamp": "2026-03-01T17:31:15.947Z",
+      "data": {
+        "reply": "Hello! I'm here and ready to help. How can I assist you today? Whether you're looking to book a table for dining or want to arrange a takeout order, just let me know! 😊",
+        "history": [
+          "User: Hello, this is a test message for API testing",
+          "AI: Hello! I'm here and ready to help. How can I assist you today? Whether you're looking to book a table for dining or want to arrange a takeout order, just let me know! 😊"
+        ]
+      }
+    }
+  ]
+}

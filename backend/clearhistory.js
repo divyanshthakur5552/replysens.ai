@@ -1,7 +1,7 @@
 const redis = require("./src/config/redis");
 
 async function clearHistory() {
-  const businessId = "6964230a7ff6b9857a0dbb5f"; // Test Salon
+  const businessId = "6964230a7ff6b9857a0dbb5f"; 
   
   await redis.del(`history:${businessId}`);
   await redis.del(`bookingState:${businessId}`);

@@ -6,9 +6,9 @@ interface StatusPillProps {
 }
 
 const statusStyles = {
-  confirmed: "bg-green-500/20 text-green-400 border-green-500/30",
-  pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  canceled: "bg-red-500/20 text-red-400 border-red-500/30",
+  confirmed: "bg-green-500/20 text-green-400",
+  pending: "bg-yellow-500/20 text-yellow-400",
+  canceled: "bg-red-500/20 text-red-400",
 };
 
 export function StatusPill({ status, className }: StatusPillProps) {
@@ -17,10 +17,11 @@ export function StatusPill({ status, className }: StatusPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border capitalize",
+        "inline-flex items-center rounded-full text-xs font-medium capitalize",
         style,
         className
       )}
+      style={{ padding: "6px 16px" }}
     >
       {status}
     </span>

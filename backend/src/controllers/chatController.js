@@ -1,6 +1,8 @@
 const axios = require("axios");
 const redis = require("../config/redis");
 const Booking = require("../models/Booking");
+const { makeGeminiRequest } = require("../services/geminiService");
+const { AI_CONFIG } = require("../../ai-config");
 
 // Slot Generation Logic
 function generateSlots(context, serviceName) {
@@ -31,7 +33,6 @@ function generateSlots(context, serviceName) {
   return slots;
 }
 
-// Parse time to 24h format
 function parseSlot(slot) {
   const pmMatch = slot.match(/(\d{1,2})(?::(\d{2}))?\s*(pm|PM)/i);
   const amMatch = slot.match(/(\d{1,2})(?::(\d{2}))?\s*(am|AM)/i);
@@ -47,7 +48,58 @@ function parseSlot(slot) {
     const min = amMatch[2] || "00";
     return `${hour.toString().padStart(2, "0")}:${min}`;
   }
-  return slot; // Already in 24h format
+  return slot; 
+}
+
+// AI API helper with retry logic and fallback using Gemini SDK
+async function makeAIRequest(messages, tools, retryCount = 0, maxTokens = 500) {
+  try {
+    return await makeGeminiRequest(messages, tools, retryCount, maxTokens);
+  } catch (error) {
+    console.log(`AI API request failed:`, error.message);
+    
+    // Return error details for fallback handling
+    return { 
+      success: false, 
+      error: {
+        message: error.message,
+        code: error.code
+      }
+    };
+  }
+}
+
+// Fallback response generator
+function generateFallbackResponse(message, context) {
+  const lowerMessage = message.toLowerCase();
+  
+  // Booking-related responses
+  if (lowerMessage.includes('book') || lowerMessage.includes('appointment')) {
+    return `I'd be happy to help you book an appointment! We offer the following services: ${context.services?.map(s => s.name).join(', ') || 'various services'}. What service would you like to book?`;
+  }
+  
+  // Hours-related responses
+  if (lowerMessage.includes('hour') || lowerMessage.includes('open') || lowerMessage.includes('close')) {
+    const hours = context.workingHours;
+    if (hours) {
+      return `We're open from ${hours.start} to ${hours.end}. How can I help you today?`;
+    }
+    return "I can help you with our business hours and booking appointments. What would you like to know?";
+  }
+  
+  // Services-related responses
+  if (lowerMessage.includes('service') || lowerMessage.includes('what do you')) {
+    const services = context.services?.map(s => `${s.name} (${s.duration} min, $${s.price})`).join(', ');
+    return services ? `We offer: ${services}. Would you like to book any of these services?` : "We offer various services. How can I assist you today?";
+  }
+  
+  // Greeting responses
+  if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+    return `Hello! Welcome to our ${context.businessType || 'business'}. I'm here to help you with bookings and questions. How can I assist you today?`;
+  }
+  
+  // Default fallback
+  return "I'm sorry, I'm having trouble connecting to our AI service right now. However, I can still help you with booking appointments, checking our services, and answering basic questions. What would you like to know?";
 }
 
 exports.chat = async (req, res) => {
@@ -55,45 +107,45 @@ exports.chat = async (req, res) => {
   if (!message) return res.status(400).json({ message: "Message required" });
 
   const businessId = req.businessId;
-
   const contextKey = `context:${businessId}`;
   const historyKey = `history:${businessId}`;
 
-  const context = JSON.parse(await redis.get(contextKey) || "{}");
-  
-  if (!context.businessType) {
-    return res.status(400).json({ 
-      error: "Context not loaded", 
-      message: "Please load your business context first via POST /context/load" 
-    });
-  }
-  
-  let history = JSON.parse(await redis.get(historyKey) || "[]");
+  try {
+    const context = JSON.parse(await redis.get(contextKey) || "{}");
+    
+    if (!context.businessType) {
+      return res.status(400).json({ 
+        error: "Context not loaded", 
+        message: "Please load your business context first via POST /context/load" 
+      });
+    }
+    
+    let history = JSON.parse(await redis.get(historyKey) || "[]");
 
-  // Fetch upcoming bookings
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const upcomingBookings = await Booking.find({
-    businessId,
-    date: { $gte: today },
-    status: { $in: ["confirmed", "pending"] }
-  }).sort({ date: 1 }).limit(10);
+    // Fetch upcoming bookings
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const upcomingBookings = await Booking.find({
+      businessId,
+      date: { $gte: today },
+      status: { $in: ["confirmed", "pending"] }
+    }).sort({ date: 1 }).limit(10);
 
-  const bookingsInfo = upcomingBookings.length > 0 
-    ? upcomingBookings.map(b => {
-        const dateStr = new Date(b.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-        return `ID:${b._id} | ${b.service} | ${dateStr} at ${b.slot} | ${b.status} | Customer: ${b.customer?.name || "N/A"} (${b.customer?.phone || "N/A"})`;
-      }).join("\n")
-    : "No upcoming bookings";
+    const bookingsInfo = upcomingBookings.length > 0 
+      ? upcomingBookings.map(b => {
+          const dateStr = new Date(b.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+          return `ID:${b._id} | ${b.service} | ${dateStr} at ${b.slot} | ${b.status} | Customer: ${b.customer?.name || "N/A"} (${b.customer?.phone || "N/A"})`;
+        }).join("\n")
+      : "No upcoming bookings";
 
-  // Available slots
-  const availableSlots = generateSlots(context, null) || [];
+    // Available slots
+    const availableSlots = generateSlots(context, null) || [];
 
-  // Build system prompt
-  const systemPrompt = `
+    // Build system prompt
+    const systemPrompt = `
 You are a friendly virtual assistant for a ${context.businessType}.
-Tone: ${context.tone}
+Tone: ${context.tone || 'friendly and professional'}
 Today's date: ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
 
 BUSINESS DATA:
@@ -119,88 +171,97 @@ CRITICAL - YOU MUST USE FUNCTIONS:
 - You can book multiple services - call add_booking for each one
 `;
 
-  // Define tools
-  const tools = [
-    {
-      type: "function",
-      function: {
-        name: "add_booking",
-        description: "Create a new booking. Call this when user wants to book a service.",
-        parameters: {
-          type: "object",
-          properties: {
-            service: { type: "string", description: "Service name (haircut, hair color, etc.)" },
-            slot: { type: "string", description: "Time slot (e.g., '15:00' or '3 PM')" },
-            date: { type: "string", description: "Date YYYY-MM-DD format. Default: today" },
-            customer_name: { type: "string", description: "Customer name" },
-            customer_phone: { type: "string", description: "Customer phone" }
-          },
-          required: ["service", "slot", "customer_name", "customer_phone"]
-        }
-      }
-    },
-    {
-      type: "function", 
-      function: {
-        name: "reschedule_booking",
-        description: "Change time/date of existing booking",
-        parameters: {
-          type: "object",
-          properties: {
-            booking_id: { type: "string", description: "Booking ID to reschedule" },
-            new_slot: { type: "string", description: "New time slot" },
-            new_date: { type: "string", description: "New date YYYY-MM-DD (optional)" }
-          },
-          required: ["booking_id", "new_slot"]
-        }
-      }
-    },
-    {
-      type: "function",
-      function: {
-        name: "cancel_booking", 
-        description: "Cancel an existing booking",
-        parameters: {
-          type: "object",
-          properties: {
-            booking_id: { type: "string", description: "Booking ID to cancel" }
-          },
-          required: ["booking_id"]
-        }
-      }
-    }
-  ];
-
-  // Format history
-  const formattedHistory = history.map(h => {
-    const [role, ...textParts] = h.split(": ");
-    return { role: role.toLowerCase() === "user" ? "user" : "assistant", content: textParts.join(": ") };
-  });
-
-  try {
-    const aiResponse = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
+    // Define tools
+    const tools = [
       {
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...formattedHistory,
-          { role: "user", content: message }
-        ],
-        tools,
-        tool_choice: "auto",
-        max_tokens: 2048
+        type: "function",
+        function: {
+          name: "add_booking",
+          description: "Create a new booking. Call this when user wants to book a service.",
+          parameters: {
+            type: "object",
+            properties: {
+              service: { type: "string", description: "Service name (haircut, hair color, etc.)" },
+              slot: { type: "string", description: "Time slot (e.g., '15:00' or '3 PM')" },
+              date: { type: "string", description: "Date YYYY-MM-DD format. Default: today" },
+              customer_name: { type: "string", description: "Customer name" },
+              customer_phone: { type: "string", description: "Customer phone" }
+            },
+            required: ["service", "slot", "customer_name", "customer_phone"]
+          }
+        }
       },
       {
-        headers: {
-          "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
-          "HTTP-Referer": "http://localhost",
-          "X-Title": "ReplySense AI"
+        type: "function", 
+        function: {
+          name: "reschedule_booking",
+          description: "Change time/date of existing booking",
+          parameters: {
+            type: "object",
+            properties: {
+              booking_id: { type: "string", description: "Booking ID to reschedule" },
+              new_slot: { type: "string", description: "New time slot" },
+              new_date: { type: "string", description: "New date YYYY-MM-DD (optional)" }
+            },
+            required: ["booking_id", "new_slot"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "cancel_booking", 
+          description: "Cancel an existing booking",
+          parameters: {
+            type: "object",
+            properties: {
+              booking_id: { type: "string", description: "Booking ID to cancel" }
+            },
+            required: ["booking_id"]
+          }
         }
       }
-    );
+    ];
 
-    const aiMessage = aiResponse.data.choices[0].message;
+    // Format history
+    const formattedHistory = history.map(h => {
+      const [role, ...textParts] = h.split(": ");
+      return { role: role.toLowerCase() === "user" ? "user" : "assistant", content: textParts.join(": ") };
+    });
+
+    // Make AI request with retry logic
+    const aiResult = await makeAIRequest([
+      { role: "system", content: systemPrompt },
+      ...formattedHistory,
+      { role: "user", content: message }
+    ], tools);
+
+    // Handle AI API failure with fallback
+    if (!aiResult.success) {
+      console.log('AI API failed, using fallback response:', aiResult.error);
+      
+      let fallbackReply;
+      
+      // Handle specific error types
+      if (aiResult.error.status === 402) {
+        fallbackReply = "I'm temporarily experiencing some technical difficulties with my AI service. However, I can still help you with basic questions about our services and bookings. What would you like to know?";
+      } else {
+        fallbackReply = generateFallbackResponse(message, context);
+      }
+      
+      history.push(`User: ${message}`);
+      history.push(`AI: ${fallbackReply}`);
+      await redis.set(historyKey, JSON.stringify(history));
+      
+      return res.json({ 
+        reply: fallbackReply, 
+        history,
+        fallback: true,
+        error: "AI service temporarily unavailable"
+      });
+    }
+
+    const aiMessage = aiResult.data.choices[0].message;
     
     // Handle function calls
     if (aiMessage.tool_calls && aiMessage.tool_calls.length > 0) {
@@ -262,29 +323,21 @@ CRITICAL - YOU MUST USE FUNCTIONS:
         content: r.result
       }));
 
-      const followUpResponse = await axios.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...formattedHistory,
-            { role: "user", content: message },
-            aiMessage,
-            ...toolMessages
-          ],
-          max_tokens: 2048
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
-            "HTTP-Referer": "http://localhost",
-            "X-Title": "ReplySense AI"
-          }
-        }
-      );
+      const followUpResult = await makeAIRequest([
+        { role: "system", content: systemPrompt },
+        ...formattedHistory,
+        { role: "user", content: message },
+        aiMessage,
+        ...toolMessages
+      ], [], 0, 300); // Empty tools array instead of null
       
-      const reply = followUpResponse.data.choices[0].message.content;
+      let reply;
+      if (followUpResult.success) {
+        reply = followUpResult.data.choices[0].message.content;
+      } else {
+        // Fallback for follow-up response
+        reply = "I've processed your request. Is there anything else I can help you with?";
+      }
       
       history.push(`User: ${message}`);
       history.push(`AI: ${reply}`);
@@ -303,7 +356,13 @@ CRITICAL - YOU MUST USE FUNCTIONS:
     return res.json({ reply, history });
 
   } catch (err) {
-    console.log(err.response?.data || err.message);
-    return res.status(500).json({ error: "AI failed", detail: err.message });
+    console.error('Chat controller error:', err);
+    
+    // Final fallback for any unexpected errors
+    return res.status(500).json({ 
+      error: "Service temporarily unavailable", 
+      message: "I'm having trouble processing your request right now. Please try again in a moment.",
+      detail: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };

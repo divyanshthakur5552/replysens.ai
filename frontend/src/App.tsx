@@ -5,7 +5,7 @@ import Chat from "./pages/Chat";
 import Dashboard from "./pages/Dashboard";
 import Inbox from "./pages/Inbox";
 import Login from "./pages/Login";
-import Onboarding from "./pages/Onboarding";
+
 import Calendar from "./pages/Calendar";
 
 // Placeholder pages - create these as needed
@@ -52,11 +52,7 @@ export default function App() {
               <Inbox />
             </ProtectedRoute>
           } />
-          <Route path="/onboarding" element={
-            <ProtectedRoute>
-              <Onboarding />
-            </ProtectedRoute>
-          } />
+          
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

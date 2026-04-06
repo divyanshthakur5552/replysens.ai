@@ -188,12 +188,12 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5" style={{ marginTop: "24px" }}>
             {/* Compact Calendar Widget */}
             <div className="lg:col-span-2 bg-[var(--card)] rounded-xl border border-[var(--border)] overflow-hidden">
-              <div className="p-4 border-b border-[var(--border)]">
-                <h3 className="font-semibold text-[var(--text-primary)]">Calendar</h3>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+                <h3 style={{ fontWeight: 600, fontSize: "16px", color: "var(--text-primary)" }}>Calendar</h3>
               </div>
               <div className="flex flex-col md:flex-row">
                 {/* Calendar */}
-                <div className="p-4 flex-shrink-0">
+                <div style={{ padding: "16px 20px" }} className="flex-shrink-0">
                   <Calendar
                     mode="single"
                     selected={selectedDate}

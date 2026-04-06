@@ -21,7 +21,6 @@ exports.debugKeys = async (req, res) => {
   res.json(keys);
 };
 
-// STEP 4 — Dashboard Endpoints
 
 // GET /bookings/all - All bookings for this business
 exports.getAllBookings = async (req, res) => {
